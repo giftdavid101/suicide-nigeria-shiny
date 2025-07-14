@@ -127,7 +127,9 @@ male_data <- nigerian_suicide_cases %>%
 average_male_rate <- mean(male_data$`Suicide Rate`, na.rm = TRUE)
 ```
 
-```{shinyrender}
+```{r}
+library(bslib)
+library(bsicons)
 
 value_box(
   title = "Male suicide rate per 100,000 from 2000–2019",
@@ -153,7 +155,9 @@ female_data <- nigerian_suicide_cases %>%
 average_female_rate <- mean(female_data$`Suicide Rate`, na.rm = TRUE)
 ```
 
-```{shinyrender}
+```{r}
+library(bslib)
+library(bsicons)
 
 value_box(
   title = "Female suicide rate per 100,000 from 2000–2019",
@@ -182,7 +186,9 @@ average_suicide_value <- mean(suicide_rate_for_total_genders$`Suicide Rate`, na.
 total_ov_rate <- round(average_suicide_value, 2)
 ```
 
-```{shinyrender}
+```{r}
+library(bslib)
+library(bsicons)
 
 value_box(
   title = "Average suicide rate from 2000 to 2019",
@@ -296,7 +302,8 @@ gender_totals <- nigerian_suicide_cases %>%
   ungroup()
 ```
 
-```{shinyrender}
+```{r}
+library(ggplot2)
 
 plot_ly(
   data = gender_totals,
@@ -330,7 +337,7 @@ overall_trend <- overall_suicide_rate %>%
   mutate(`Suicide Year` = as.integer(`Suicide Year`))
 ```
 
-```{shinyrender}
+```{r}
 
 library(ggplot2)
 
