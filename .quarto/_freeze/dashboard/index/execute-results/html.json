@@ -1,0 +1,17 @@
+{
+  "hash": "f5af3426fec1f9c3c5710ed7f5d23385",
+  "result": {
+    "engine": "knitr",
+    "markdown": "---\ntitle: \"Data Analysis of Suicide in Nigeria\"\nauthor: \"Gift David\"\nformat:\n  dashboard:\n    logo: assets/images/thcai-logo.png\n    nav-buttons:\n      - icon: file\n        title: report\n        href: https://docs.google.com/document/d/15hE46jFvj5pnw4lbcJsg3NOOu0spqng-XktD4CuAUO4/edit?usp=sharing\nserver: \n  shiny: true\n  engine: knitr \nexecute:\n  echo: false\n  warning: false\n  message: false\n---\n\n\n::: {.cell}\n\n:::\n\n\n\n::: {.cell}\n\n:::\n\n\n\n::: {.cell}\n\n:::\n\n\n# Overview\n\n\n::: {.cell}\n\n:::\n\n\n## Row\n\n::: {.cell}\n\n:::\n\n\n\n::: {.cell}\n\n:::\n\n\n\n\n::: {.cell}\n\n:::\n\n\n\n::: {.cell}\n\n:::\n\n\n\n::: {.cell}\n\n:::\n\n\n\n::: {.cell}\n\n:::\n\n## Row {font-size = 1px}\n\n### Column {.tabset}\n## Yearly Average Suicide Rate\n\n\n::: {.cell}\n\n:::\n\n\n\n::: {.cell}\n\n:::\n\n## By Age Group\n\n\n::: {.cell}\n\n:::\n\n\n\n::: {.cell}\n\n:::\n\n## By Age and Gender (3D)\n\n\n::: {.cell}\n\n:::\n\n### Column {.tabset}\n\n## Summary of Suicide Rates by Gender\n\n\n::: {.cell}\n\n:::\n\n\n\n::: {.cell}\n\n:::\n\n## Suicide Mortality Trends in Nigeria (2000–2017)\n\n\n::: {.cell}\n\n:::\n\n\n\n::: {.cell}\n\n:::\n\n\n\n\n",
+    "supporting": [
+      "index_files"
+    ],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}
