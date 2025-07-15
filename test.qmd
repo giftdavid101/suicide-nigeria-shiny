@@ -54,3 +54,32 @@ output$plot1 <- renderPlot({
   points(clusters()$centers, pch = 4, cex = 4, lwd = 4)
 })
 ```
+
+## Visualizations {.tabset}
+
+### Scatter Plot: MPG vs HP
+
+::: panel-tabset
+#### Home Runs
+
+```{r}
+library(ggplot2)
+
+ggplot(mtcars, aes(x = mpg, y = hp)) +
+  geom_point(color = "darkblue", size = 3) +
+  labs(
+    title = "Scatter Plot",
+    x = "Miles Per Gallon (MPG)",
+    y = "Horsepower (HP)"
+  )
+```
+#### Home Run
+```{r}
+ggplot(mtcars, aes(x = factor(cyl), y = mpg)) +
+  geom_boxplot(fill = "lightgreen", color = "black") +
+  labs(
+    title = "Boxplot",
+    x = "Number of Cylinders",
+    y = "Miles Per Gallon (MPG)"
+  )
+```
