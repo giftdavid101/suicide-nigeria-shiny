@@ -1,0 +1,395 @@
+---
+title: "Data Analysis of Suicide in Nigeria"
+author: "Gift David"
+format:
+  dashboard:
+    logo: assets/images/thcai-logo.png
+    nav-buttons:
+      - icon: file
+        title: report
+        href: https://docs.google.com/document/d/15hE46jFvj5pnw4lbcJsg3NOOu0spqng-XktD4CuAUO4/edit?usp=sharing
+server: 
+  shiny: true
+  engine: knitr 
+execute:
+  echo: false
+  warning: false
+  message: false
+  output: true
+---
+
+```{r}
+
+library(shiny)
+library(tidyverse)     # includes dplyr, ggplot2, readr, etc.
+library(plotly)        # for interactive charts
+library(scales)
+
+```
+
+```{r}
+
+# Load required libraries
+library(readr)
+library(dplyr)
+
+# Load your data
+suicide_data <- read_csv("data/who_suicide_latest.csv")
+poverty_data <- read_csv("data/ndp_poverty2004_2010.csv")
+unemployment_data <- read_csv("data/unemployed.csv")
+
+# Filter Nigeria-specific suicide data
+nigerian_suicide_cases <- suicide_data %>%
+  filter(GEO_NAME_SHORT == "Nigeria")
+
+# Filter total unemployed indicator
+total_unemployed <- unemployment_data %>%
+  filter(indicator == "Total Unemployed")
+```
+
+```{r}
+
+# Make sure dplyr and readr are loaded earlier
+
+# Add a Date column (copy of DIM_TIME)
+nigerian_suicide_cases <- nigerian_suicide_cases %>%
+  mutate(Date = DIM_TIME)
+
+# Sort poverty data by Date
+pov_data_sorted <- poverty_data %>%
+  arrange(Date)
+
+# Select relevant poverty columns and reset index (not needed in R)
+pov_mask <- pov_data_sorted %>%
+  select(region, Date, Value)
+
+# Select relevant suicide columns
+sui_mask <- nigerian_suicide_cases %>%
+  select(DIM_TIME, RATE_PER_100000_N, DIM_SEX, DIM_AGE, Date, GEO_NAME_SHORT)
+
+# Merge poverty and suicide data on 'Date'
+merged_sp1 <- pov_mask %>%
+  inner_join(sui_mask, by = "Date")
+```
+
+# Overview
+
+```{r}
+
+# Rename columns
+nigerian_suicide_cases <- nigerian_suicide_cases %>%
+  rename(
+    `Suicide Year` = DIM_TIME,
+    Gender = DIM_SEX,
+    `Suicide Rate` = RATE_PER_100000_N,
+    Lower_Rate_NL = RATE_PER_100000_NL,
+    Upper_Rate_NU = RATE_PER_100000_NU,
+    Age = DIM_AGE
+  )
+
+total_unemployed <- total_unemployed %>%
+  rename(
+    UE_Value = Value,
+    UE_Date = Date
+  )
+
+poverty_data <- poverty_data %>%
+  rename(Pov_Value = Value)
+
+# Filter by gender
+male_suicide_rate <- nigerian_suicide_cases %>%
+  filter(Gender == "MALE")
+
+female_suicide_rate <- nigerian_suicide_cases %>%
+  filter(Gender == "FEMALE")
+
+overall_suicide_rate <- nigerian_suicide_cases %>%
+  filter(Gender == "TOTAL")
+
+# Create mask for year range 2000–2019
+mask <- nigerian_suicide_cases %>%
+  filter(`Suicide Year` >= 2000, `Suicide Year` <= 2019)
+```
+
+## Row
+```{r}
+
+# Filter male, total age, 2000–2019
+male_data <- nigerian_suicide_cases %>%
+  filter(
+    Gender == "MALE",
+    Age == "TOTAL",
+    `Suicide Year` >= 2000,
+    `Suicide Year` <= 2019
+  )
+
+# Calculate average
+average_male_rate <- mean(male_data$`Suicide Rate`, na.rm = TRUE)
+```
+
+```{r}
+library(bslib)
+library(bsicons)
+
+value_box(
+  title = "Male suicide rate per 100,000 from 2000–2019",
+  value = sprintf("%.1f%%", average_male_rate),
+  icon = "gender-male",
+  color = "#F5F5F5"
+)
+```
+
+
+```{r}
+
+# Filter female, total age, 2000–2019
+female_data <- nigerian_suicide_cases %>%
+  filter(
+    Gender == "FEMALE",
+    Age == "TOTAL",
+    `Suicide Year` >= 2000,
+    `Suicide Year` <= 2019
+  )
+
+# Calculate average
+average_female_rate <- mean(female_data$`Suicide Rate`, na.rm = TRUE)
+```
+
+```{r}
+library(bslib)
+library(bsicons)
+
+value_box(
+  title = "Female suicide rate per 100,000 from 2000–2019",
+  value = sprintf("%.1f%%", average_female_rate),
+  icon = "gender-female",
+  color = "#FFA725"
+)
+
+```
+
+```{r}
+
+# Filter for TOTAL gender and TOTAL age
+suicide_rate_for_total_genders <- nigerian_suicide_cases %>%
+  filter(
+    Gender == "TOTAL",
+    Age == "TOTAL",
+    `Suicide Year` >= 2000,
+    `Suicide Year` <= 2019
+  )
+
+# Compute average suicide rate
+average_suicide_value <- mean(suicide_rate_for_total_genders$`Suicide Rate`, na.rm = TRUE)
+
+# Optional rounding if you want a second value (not used in value_box)
+total_ov_rate <- round(average_suicide_value, 2)
+```
+
+```{r}
+library(bslib)
+library(bsicons)
+
+value_box(
+  title = "Average suicide rate from 2000 to 2019",
+  value = sprintf("%.1f%%", average_suicide_value),
+  icon = "people",
+  color = "#F5F5F5"
+)
+```
+## Row {font-size = 1px}
+
+```{r}
+
+# Group by year and calculate mean suicide rate
+yearly_avg <- nigerian_suicide_cases %>%
+  group_by(`Suicide Year`) %>%
+  summarise(`Suicide Rate` = mean(`Suicide Rate`, na.rm = TRUE)) %>%
+  ungroup()
+
+# Ensure all years from 2000 to 2019 are represented
+full_years <- tibble(`Suicide Year` = 2000:2019)
+
+# Left join to fill in missing years (with NA)
+yearly_avg_full <- full_years %>%
+  left_join(yearly_avg, by = "Suicide Year")
+```
+
+### Column
+::: panel-tabset
+
+## Yearly Average Suicide Rate
+```{r}
+
+plot_ly(data = yearly_avg_full, 
+        x = ~`Suicide Year`, 
+        y = ~`Suicide Rate`, 
+        type = 'scatter', 
+        mode = 'lines+markers',
+        line = list(color = '#e74c3c')) %>%
+  layout(
+    title = "Average Suicide Rate per Year (2000–2019)",
+    xaxis = list(title = "Year", tickmode = "linear", tick0 = 2000, dtick = 1, range = c(2000, 2019)),
+    yaxis = list(title = "Suicide Rate (per 100k)"),
+    hovermode = "x unified"
+  
+  )
+
+```
+## By Age Group
+
+```{r}
+
+# Filter out 'TOTAL' gender
+age_gender_data <- nigerian_suicide_cases %>%
+  filter(Gender != "TOTAL")
+```
+
+```{r}
+
+plot_ly(data = age_gender_data, 
+        x = ~Age, 
+        y = ~`Suicide Rate`, 
+        color = ~Gender,
+        colors = c("MALE" = "#e74c3c", "FEMALE" = "#3498db"),
+        type = 'bar',
+        barmode = 'group') %>%
+  layout(
+    title = "Suicide Rates in Nigeria by Age and Gender",
+    xaxis = list(title = "Age Group", tickangle = -90),
+    yaxis = list(title = "Number of Suicides"),
+    legend = list(title = list(text = "Gender")),
+    width = 700,
+    height = 400
+  )
+
+```
+## By Age and Gender (3D)
+
+```{r}
+
+plot_ly(
+  data = nigerian_suicide_cases,
+  x = ~Age,
+  y = ~`Suicide Rate`,
+  z = ~Gender,
+  color = ~Gender,
+  symbol = ~Gender,
+  type = "scatter3d",
+  mode = "markers",
+  marker = list(opacity = 0.8)
+) %>%
+  layout(
+    title = "Suicide Rate Variation by Age and Gender (3D)",
+    scene = list(
+      xaxis = list(title = "Age (Years)"),
+      yaxis = list(title = "Suicide Rate (per 100k)"),
+      zaxis = list(title = "Gender")
+    ),
+    height = 600
+  )
+```
+### Column {.tabset}
+
+## Summary of Suicide Rates by Gender
+
+```{r}
+
+# Filter out only MALE and FEMALE
+gender_totals <- nigerian_suicide_cases %>%
+  filter(Gender %in% c("MALE", "FEMALE")) %>%
+  group_by(Gender) %>%
+  summarise(`Suicide Rate` = sum(`Suicide Rate`, na.rm = TRUE)) %>%
+  ungroup()
+```
+
+```{r}
+library(ggplot2)
+
+plot_ly(
+  data = gender_totals,
+  x = ~Gender,
+  y = ~`Suicide Rate`,
+  type = "bar",
+  color = ~Gender,
+  colors = c("MALE" = "#00809D", "FEMALE" = "#328E6E")
+) %>%
+  layout(
+    title = "Total Suicide Rates by Gender",
+    xaxis = list(title = "Gender"),
+    yaxis = list(title = "Suicide Rate")
+  )
+```
+## Suicide Mortality Trends in Nigeria (2000–2017)
+
+```{r}
+
+# Prepare male, female, and overall suicide rates
+male_trend <- male_suicide_rate %>%
+  arrange(`Suicide Year`) %>%
+  mutate(`Suicide Year` = as.integer(`Suicide Year`))
+
+female_trend <- female_suicide_rate %>%
+  arrange(`Suicide Year`) %>%
+  mutate(`Suicide Year` = as.integer(`Suicide Year`))
+
+overall_trend <- overall_suicide_rate %>%
+  arrange(`Suicide Year`) %>%
+  mutate(`Suicide Year` = as.integer(`Suicide Year`))
+```
+
+```{r}
+
+library(ggplot2)
+
+ggplot() +
+  # Male ribbon
+  geom_ribbon(
+    data = male_trend,
+    aes(
+      x = `Suicide Year`,
+      ymin = Lower_Rate_NL,
+      ymax = Upper_Rate_NU
+    ),
+    fill = "#1f77b4", alpha = 0.2
+  ) +
+  # Female ribbon
+  geom_ribbon(
+    data = female_trend,
+    aes(
+      x = `Suicide Year`,
+      ymin = Lower_Rate_NL,
+      ymax = Upper_Rate_NU
+    ),
+    fill = "#ff7f0e", alpha = 0.2
+  ) +
+  # Male line
+  geom_line(data = male_trend, aes(x = `Suicide Year`, y = `Suicide Rate`, color = "Male")) +
+  geom_point(data = male_trend, aes(x = `Suicide Year`, y = `Suicide Rate`, color = "Male")) +
+
+  # Female line
+  geom_line(data = female_trend, aes(x = `Suicide Year`, y = `Suicide Rate`, color = "Female")) +
+  geom_point(data = female_trend, aes(x = `Suicide Year`, y = `Suicide Rate`, color = "Female")) +
+
+  # Overall line
+  geom_line(data = overall_trend, aes(x = `Suicide Year`, y = `Suicide Rate`, color = "Overall")) +
+  geom_point(data = overall_trend, aes(x = `Suicide Year`, y = `Suicide Rate`, color = "Overall")) +
+
+  scale_color_manual(values = c("Male" = "#1f77b4", "Female" = "#ff7f0e", "Overall" = "#2ca02c")) +
+  scale_x_continuous(breaks = seq(2000, 2017, by = 1)) +
+  ylim(0, 12) +
+  labs(
+    title = "Suicide Mortality Trends in Nigeria (2000–2017)",
+    x = "Year",
+    y = "Suicide Rate (per 100k)",
+    color = "Legend"
+  ) +
+  theme_minimal() +
+  theme(
+    panel.grid.major.y = element_line(color = "gray", linetype = "dotted", size = 0.3),
+    panel.grid.minor = element_blank()
+  )
+```
+
+
+
